@@ -21,6 +21,7 @@ class FolioReaderScript: WKUserScript {
             }
     }
     
+    //     Depricated
     static let bridgeJS: FolioReaderScript = {
         let jsURL = Bundle.frameworkBundle().url(forResource: "Bridge", withExtension: "js")!
         let jsSource = try! String(contentsOf: jsURL)

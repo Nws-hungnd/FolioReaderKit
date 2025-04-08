@@ -50,7 +50,14 @@ open class FolioReaderWebView: WKWebView {
         }
         super.init(frame: frame, configuration: configuration)
         FolioReaderScript.cssInjection.addIfNeeded(to: self)
-        FolioReaderScript.bridgeJS.addIfNeeded(to: self)
+        
+        guard let jsURL = Bundle.frameworkBundle().url(forResource: "Bridge", withExtension: "js"),
+              let jsSource = try? String(contentsOf: jsURL) else {
+            print("Error: Cannot load Bridge.js from framework bundle")
+            return
+        }
+        let userScript = WKUserScript(source: jsSource, injectionTime: .atDocumentEnd, forMainFrameOnly: true)
+        self.configuration.userContentController.addUserScript(userScript)
     }
 
     required public init?(coder aDecoder: NSCoder) {
