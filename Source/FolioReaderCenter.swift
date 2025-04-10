@@ -132,6 +132,9 @@ open class FolioReaderCenter: UIViewController, UICollectionViewDelegate, UIColl
     override open func viewDidLoad() {
         super.viewDidLoad()
 
+        UIApplication.shared.windows.first?.safeAreaInsets.top
+        UIApplication.shared.windows.first?.safeAreaInsets.bottom
+        
         screenBounds = self.getScreenBounds()
         
         setPageSize(UIApplication.shared.statusBarOrientation)
@@ -270,7 +273,13 @@ open class FolioReaderCenter: UIViewController, UICollectionViewDelegate, UIColl
 
         let menu = UIBarButtonItem(image: closeIcon, style: .plain, target: self, action:#selector(closeReader(_:)))
         let toc = UIBarButtonItem(image: tocIcon, style: .plain, target: self, action:#selector(presentChapterList(_:)))
-
+        
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithOpaqueBackground()
+        appearance.backgroundColor = .white
+        navigationController?.navigationBar.standardAppearance = appearance
+        navigationController?.navigationBar.scrollEdgeAppearance = navigationController?.navigationBar.standardAppearance
+    
         navigationItem.leftBarButtonItems = [menu, toc]
 
         var rightBarIcons = [UIBarButtonItem]()
