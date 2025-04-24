@@ -147,7 +147,14 @@ open class FolioReaderPage: UICollectionViewCell, WKNavigationDelegate, UIGestur
         webView?.alpha = 0
         let headerString = "<meta name=\"viewport\" content=\"initial-scale=1.0\" />"
         let documentDirUrl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-        webView?.loadFileURL(baseURL, allowingReadAccessTo: documentDirUrl)
+        if #available(iOS 18, *) {
+            if let data = try? Data(contentsOf: baseURL) {
+                webView?.load(data, mimeType: "application/epub+zip", characterEncodingName: "", baseURL: baseURL)
+            }
+        } else {
+            webView?.loadFileURL(baseURL, allowingReadAccessTo: documentDirUrl)
+        }
+        
         webView?.loadHTMLString(headerString + tempHtmlContent, baseURL: baseURL)
     }
 
