@@ -139,23 +139,52 @@ open class FolioReaderPage: UICollectionViewCell, WKNavigationDelegate, UIGestur
             height: self.readerConfig.isDirection(bounds.height - navTotal, bounds.height - navTotal - paddingTop - paddingBottom, bounds.height - navTotal)
         )
     }
+    
+    private func printDirectoryStructure(at url: URL, prefix: String = "") {
+        let fileManager = FileManager.default
+        do {
+            let contents = try fileManager.contentsOfDirectory(at: url, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles])
 
-    func loadHTMLString(_ htmlContent: String!, baseURL: URL!) {
+            for item in contents {
+                var isDir: ObjCBool = false
+                fileManager.fileExists(atPath: item.path, isDirectory: &isDir)
+
+                if isDir.boolValue {
+                    print("\(prefix)📁 \(item.lastPathComponent)/")
+                    printDirectoryStructure(at: item, prefix: prefix + "    ")
+                } else {
+                    print("\(prefix)📄 \(item.lastPathComponent)")
+                }
+            }
+        } catch {
+            print("❌ Lỗi khi đọc thư mục: \(error)")
+        }
+    }
+    
+
+    func loadHTMLString(title: String!,htmlContent: String!, baseURL: URL!) {
+//        printDirectoryStructure(at: baseURL.deletingLastPathComponent().deletingLastPathComponent())
         // Insert the stored highlights to the HTML
         let tempHtmlContent = htmlContentWithInsertHighlights(htmlContent)
         // Load the html into the webview
         webView?.alpha = 0
-        let headerString = "<meta name=\"viewport\" content=\"initial-scale=1.0\" />"
-        let documentDirUrl = try! FileManager.default.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: false)
-        if #available(iOS 18, *) {
-            if let data = try? Data(contentsOf: baseURL) {
-                webView?.load(data, mimeType: "application/epub+zip", characterEncodingName: "", baseURL: baseURL)
-            }
-        } else {
-            webView?.loadFileURL(baseURL, allowingReadAccessTo: documentDirUrl)
-        }
+        let tempPath = baseURL.path
+        let filePath = tempPath + "/" + title
         
-        webView?.loadHTMLString(headerString + tempHtmlContent, baseURL: baseURL)
+//        if title.contains("xhtml") {
+//            let htmlData = NSString(string: tempHtmlContent).data(using: String.Encoding.utf8.rawValue)
+//            let options = [NSAttributedString.DocumentReadingOptionKey.documentType:
+//                            NSAttributedString.DocumentType.rtfd]
+//            
+//            let attributedString = try? NSMutableAttributedString(data: htmlData ?? Data(),options: options,documentAttributes: nil)
+//            try! attributedString?.string.write(toFile: filePath, atomically: true, encoding: String.Encoding.utf8)
+//            
+//        } else {
+//            try! tempHtmlContent.write(toFile: filePath, atomically: true, encoding: String.Encoding.utf8)
+//        }
+        
+        webView?.loadFileURL(URL(fileURLWithPath: filePath), allowingReadAccessTo:URL(fileURLWithPath: baseURL.path.deletingLastPathComponent))
+        
     }
 
     // MARK: - Highlights
@@ -286,6 +315,11 @@ open class FolioReaderPage: UICollectionViewCell, WKNavigationDelegate, UIGestur
 
             let anchorFromURL = url.fragment
 
+            // If url doesn't have anchor and have no navigate link => allow to WKWebView load
+            if anchorFromURL == nil && navigationAction.navigationType == .other {
+                return true
+            }
+            
             // Handle internal url
             if !url.pathExtension.isEmpty {
                 let pathComponent = (self.book.opfResource.href as NSString?)?.deletingLastPathComponent
@@ -354,7 +388,7 @@ open class FolioReaderPage: UICollectionViewCell, WKNavigationDelegate, UIGestur
             if isClassBasedOnClickListenerScheme == false {
                 // Try to open the url with the system if it wasn't a custom class based click listener
                 if UIApplication.shared.canOpenURL(url) {
-                    UIApplication.shared.openURL(url)
+                    UIApplication.shared.open(url)
                     return false
                 }
             } else {
